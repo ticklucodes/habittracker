@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning & Growth Tracker</title>
+<style>
+*{box-sizing:border-box}
+:root{--page:#F8F1D5;--panel:#FFFDF4;--green:#2E8B57;--violet:#8B5CF6;--text:#403D30;--muted:#756F5B;--border:#E4DAB5}
+body{margin:0;min-height:100vh;padding:24px;font-family:Arial,sans-serif;background:var(--page);color:var(--text)}
+main{max-width:1000px;margin:0 auto}.panel{padding:24px;background:var(--panel);border:1px solid rgba(181,161,91,.22);border-radius:22px;box-shadow:0 10px 30px rgba(80,69,35,.08)}
+h1{margin:0 0 8px;font-size:26px}.intro{color:var(--muted);line-height:1.5;margin:0 0 18px}
+.tracker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.activity{padding:18px;background:#fff;border:1px solid var(--border);border-radius:16px;min-width:0}
+.activity h2{font-size:17px;margin:0 0 8px}.description{color:var(--muted);font-size:13px;line-height:1.5;min-height:36px;margin:0 0 12px}
+.count{font-size:26px;font-weight:bold;margin:12px 0;color:var(--green)}.progress-track{width:100%;height:8px;background:#eee8d7;border-radius:10px;overflow:hidden;margin:12px 0 16px}.progress{height:100%;width:0;background:var(--green);border-radius:10px;transition:width .2s}
+.actions{display:flex;flex-wrap:wrap;gap:8px}button{border:none;padding:10px 12px;border-radius:10px;background:var(--green);color:white;font-weight:bold;cursor:pointer;font-size:13px}button:hover{filter:brightness(.92)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--violet);outline-offset:3px}.reset{background:#e9e2f9;color:#5b3aa4}
+.summary{margin-top:18px;padding:15px;background:#F0F6E9;border-radius:12px;line-height:1.7}.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:18px}
+.section-title{margin:24px 0 10px;font-size:18px}.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.field label{font-size:13px;color:var(--muted);font-weight:bold}
+input,textarea{padding:10px;border:1px solid var(--border);border-radius:10px;font:inherit;color:var(--text);max-width:100%;width:100%;background:#fff}
+textarea{min-height:76px;resize:vertical}.target-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.target-row .field{margin:0}
+.topline{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.emoji{font-size:22px}
+@media(max-width:650px){body{padding:14px}.panel{padding:18px 14px}.tracker,.target-row{grid-template-columns:1fr}.topline{align-items:center}}
+</style>
+</head>
+<body>
+<main><section class="panel">
+<h1>📚 Learning & Growth Tracker</h1>
+<p class="intro">Give every learning path its own space. Set a target, track completed study sessions or tasks, and keep notes as you scale your progress.</p>
+<div class="tracker" id="tracker"></div>
+<h2 class="section-title">📈 Overall Progress</h2>
+<section class="summary">
+<strong id="overall-title">Your learning dashboard</strong>
+<div id="overall-summary">Loading progress…</div>
+<div class="progress-track"><div class="progress" id="overall-progress"></div></div>
+</section>
+<div class="actions" style="margin-top:16px">
+<button onclick="exportCSV()">Export tracker (.csv)</button>
+<button class="reset" onclick="resetAll()">Reset all progress</button>
+</div>
+<p class="note">💡 Each category is independent. Targets and progress are saved in this browser on this device. Use the notes area for topics, assignments, deadlines, or next steps. Export your records regularly if you want a backup.</p>
+</section></main>
+<script>
+const categories = [
+  {id:'srm', name:'SRM MCA', icon:'🎓', description:'MCA coursework, lectures, assignments, exams and revision.', target:5},
+  {id:'da', name:'DA Academy', icon:'📊', description:'Academy modules, data analytics practice and course milestones.', target:5},
+  {id:'coding', name:'Coding Wise', icon:'💻', description:'Coding lessons, practice problems, projects and technical skills.', target:5},
+  {id:'captain', name:'My Captain Content', icon:'✍️', description:'Content course modules, exercises, drafts and portfolio work.', target:5},
+  {id:'copywriting', name:'Copy Writing', icon:'📝', description:'Copywriting practice, headlines, ads, landing pages and revisions.', target:5}
+];
+const storageKey='learning-growth-tracker-v1';
+let state={};
+try { state=JSON.parse(localStorage.getItem(storageKey)||'{}')||{}; } catch(e) { state={}; }
+categories.forEach(c=>{state[c.id] = {...{done:0,target:c.target,notes:''},...(state[c.id]||{})}; state[c.id].target=Math.max(1,Number(state[c.id].target)||c.target); state[c.id].done=Math.max(0,Math.min(state[c.id].target,Number(state[c.id].done)||0));});
+const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function save(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch(e){}}
+function render(){
+  const tracker=document.getElementById('tracker');
+  tracker.innerHTML=categories.map(c=>{
+    const s=state[c.id],pct=Math.min(100,Math.round(s.done/s.target*100));
+    return `<section class="activity">
+      <div class="topline"><h2>${c.icon} ${c.name}</h2><span class="small">${pct}%</span></div>
+      <p class="description">${c.description}</p>
+      <div class="count">${s.done} / ${s.target}</div>
+      <div class="small">sessions / tasks completed</div>
+      <div class="progress-track"><div class="progress" style="width:${pct}%"></div></div>
+      <div class="actions">
+        <button onclick="change('${c.id}',1)">+ Complete</button>
+        <button class="reset" onclick="change('${c.id}',-1)">Undo</button>
+        <button class="reset" onclick="resetCategory('${c.id}')">Reset</button>
+      </div>
+      <div class="target-row">
+        <div class="field"><label for="${c.id}-target">Target (scale anytime)</label><input id="${c.id}-target" type="number" min="1" step="1" value="${s.target}" onchange="setTarget('${c.id}',this.value)"></div>
+        <div class="field"><label>Completion</label><input value="${pct}%" readonly aria-label="Completion percentage"></div>
+      </div>
+      <div class="field"><label for="${c.id}-notes">Notes / next steps</label><textarea id="${c.id}-notes" placeholder="Add modules, tasks, deadlines or next steps…" oninput="setNotes('${c.id}',this.value)">${esc(s.notes)}</textarea></div>
+    </section>`;
+  }).join('');
+  updateSummary(); save();
+}
+function change(id,n){state[id].done=Math.max(0,Math.min(state[id].target,state[id].done+n));render();}
+function resetCategory(id){state[id].done=0;render();}
+function setTarget(id,value){const target=Math.max(1,Math.floor(Number(value)||1));state[id].target=target;state[id].done=Math.min(state[id].done,target);render();}
+function setNotes(id,value){state[id].notes=value;save();updateSummary();}
+function updateSummary(){
+ const totalDone=categories.reduce((a,c)=>a+state[c.id].done,0);
+ const totalTarget=categories.reduce((a,c)=>a+state[c.id].target,0);
+ const pct=totalTarget?Math.round(totalDone/totalTarget*100):0;
+ document.getElementById('overall-title').textContent=`${totalDone} of ${totalTarget} total tasks completed`;
+ document.getElementById('overall-summary').textContent=categories.map(c=>`${c.name}: ${state[c.id].done}/${state[c.id].target}`).join(' · ');
+ document.getElementById('overall-progress').style.width=pct+'%';
+}
+function resetAll(){if(!confirm('Reset completed counts for all five categories? Your targets and notes will be kept.'))return;categories.forEach(c=>state[c.id].done=0);render();}
+function exportCSV(){
+ const rows=[['Category','Completed','Target','Completion %','Notes']];
+ categories.forEach(c=>{const s=state[c.id];rows.push([c.name,s.done,s.target,Math.round(s.done/s.target*100),s.notes]);});
+ const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='learning-growth-tracker.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+render();
+</script>
+</body>
+</html>

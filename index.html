@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>40–15–5 Movement Timer</title>
+<style>
+* { box-sizing: border-box; }
+:root {
+  --page:#F8F1D5; --panel:#FFFDF4; --soft-yellow:#F2E8BD; --track:#EEE7CD;
+  --gold:#8B5CF6; --violet:#8B5CF6; --green:#2E8B57; --button:#2E8B57;
+  --text:#403D30; --muted:#756F5B; --border:#E4DAB5;
+}
+body { margin:0; min-height:100vh; padding:28px; font-family:Arial,sans-serif; background:var(--page); color:var(--text); }
+.workspace { width:100%; max-width:1600px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1.1fr) minmax(340px,.9fr); gap:22px; align-items:start; }
+.resources-column { min-width:0; display:flex; flex-direction:column; gap:18px; }
+.panel { min-width:0; padding:24px; background:var(--panel); border:1px solid rgba(181,161,91,.22); border-radius:22px; box-shadow:0 10px 30px rgba(80,69,35,.08); }
+.section-title { margin:0 0 8px; font-size:22px; line-height:1.3; }
+.section-subtitle { margin:0 0 20px; color:var(--muted); font-size:14px; line-height:1.5; }
+.video-frame { position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:14px; background:var(--soft-yellow); border:1px solid var(--border); }
+.video-frame iframe, .video-frame video { position:absolute; inset:0; width:100%; height:100%; border:0; }
+.video-frame video { object-fit:contain; background:#171717; }
+.local-video-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; }
+.local-video-button { display:inline-flex; align-items:center; justify-content:center; padding:11px 14px; border-radius:10px; background:var(--button); color:#fff; font-size:13px; font-weight:bold; cursor:pointer; }
+.local-video-status { margin:0; color:var(--muted); font-size:12px; line-height:1.5; }
+#localVideoFile { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; }
+.video-note { margin:14px 0 0; color:var(--muted); font-size:13px; line-height:1.5; }
+.video-note a { color:var(--button); font-weight:bold; text-decoration:underline; text-underline-offset:2px; }
+.timer { text-align:center; }
+.subtitle { color:var(--muted); font-size:12px; letter-spacing:2px; line-height:1.5; }
+#icon { font-size:52px; margin:18px 0 8px; }
+#phase { font-size:27px; margin:8px 0; }
+#clock { font-size:clamp(48px,7vw,68px); font-weight:bold; font-variant-numeric:tabular-nums; margin:18px 0; }
+.progress-track { height:9px; background:var(--track); border-radius:20px; overflow:hidden; }
+#progress { width:0%; height:100%; background:var(--violet); transition:width .3s linear; }
+#next,#cycle,#status,#saveStatus { color:var(--muted); font-size:14px; margin:15px 0; line-height:1.5; }
+#saveStatus { font-size:12px; margin-top:4px; }
+.controls { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin:22px 0; }
+button { padding:13px 19px; border:none; border-radius:12px; font-size:15px; font-weight:bold; cursor:pointer; transition:filter .2s ease,transform .2s ease; }
+button:hover { filter:brightness(.97); } button:active { transform:translateY(1px); }
+button:focus-visible,input:focus-visible,.link-button:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+#start { background:var(--button); color:#fff; } #reset { background:var(--green); color:#fff; }
+.settings { display:flex; flex-direction:column; gap:13px; align-items:flex-start; padding:16px; background:#F8F3DF; border:1px solid #EEE5C5; border-radius:14px; font-size:14px; }
+.settings label { display:flex; align-items:center; gap:10px; cursor:pointer; line-height:1.4; }
+input[type=checkbox] { width:17px; height:17px; accent-color:var(--violet); flex:0 0 auto; }
+.phases { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:18px; }
+.phase-card { padding:12px 5px; border:1px solid var(--border); border-radius:12px; font-size:12px; line-height:1.4; background:#FFFEF9; }
+.phase-card strong { display:block; margin-top:6px; font-size:13px; }
+.phase-card.active { border:2px solid var(--gold); background:var(--soft-yellow); padding:11px 4px; }
+.hint { font-size:12px; color:var(--muted); line-height:1.6; margin:18px 0 0; }
+.quick-links { display:flex; flex-direction:column; gap:12px; }
+.link-button { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:15px 12px; background:var(--button); color:#fff; border-radius:12px; text-decoration:none; font-size:15px; font-weight:bold; text-align:center; transition:filter .2s ease,transform .2s ease; overflow-wrap:anywhere; }
+.link-button:hover { filter:brightness(.92); } .link-button:active { transform:translateY(1px); }
+.link-button.word { background:var(--green); color:#fff; }
+.link-description { color:var(--muted); font-size:13px; line-height:1.6; margin:0 0 8px; }
+.connection { background:#F8F3DF; border:1px solid #EEE5C5; border-radius:12px; padding:12px; text-align:left; font-size:13px; line-height:1.5; margin-top:16px; }
+.connection strong { color:var(--green); }
+@media(max-width:850px) { body{padding:16px;} .workspace{grid-template-columns:1fr;} .resources-column{order:1;} .timer-panel{order:2;} }
+@media(max-width:420px) { .panel{padding:18px 14px;} .phases{gap:5px;} .phase-card{font-size:11px;} .phase-card strong{font-size:12px;} }
+</style>
+</head>
+<body>
+<main class="workspace">
+  <div class="resources-column">
+    <section class="panel video-panel" aria-labelledby="video-heading">
+      <h2 class="section-title" id="video-heading">Focus &amp; Relax</h2>
+      <p class="section-subtitle">Play the local video.</p>
+      <div class="video-frame">
+        <video id="localVideo" controls playsinline preload="metadata" src="8hrstudy.mp4">
+          Your browser does not support local video playback.
+        </video>
+      </div>
+      <p class="video-note"> ✅KEEP ALL THE TABS OPEN SEPARATELY. </p>
+    </section>
+    <section class="panel links-panel" aria-labelledby="links-heading">
+      <h2 class="section-title" id="links-heading">✔️ Quick Links</h2>
+      <p class="section-subtitle">Hanuman Chalisa, Gurudev Meditation, Sudarshan Kriya, Om Namah Shivaya, and Sri Sri Yoga.</p>
+      <div class="quick-links">
+        <a class="link-button" href="Sadhana_Tracker.html">🕉️ SADHANA</a>
+        <p class="link-description">Your study resources and documents.</p>
+        <a class="link-button" href="study_work.html" target="_blank" rel="noopener noreferrer">📘 STUDY</a>
+        <p class="link-description">Access your notes, study plans, and daily tasks.</p>
+        <a class="link-button word" href="daily_task_excel.html" target="_blank" rel="noopener noreferrer">📝 DAILY TASKS</a>
+        <p class="link-description">Open your study notes and daily task documents.</p>
+        <a class="link-button" href="Daily_Wellness_Sleep_Tracker.html">💧 WELLNESS TRACKER</a>
+        <p class="link-description">Track daily wellness activities and your sleep log.</p>
+      </div>
+    </section>
+  </div>
+  <section class="panel timer timer-panel" aria-label="40–15–5 movement timer">
+    <div class="subtitle">HEALTHY MOVEMENT ROUTINE</div>
+    <div id="icon" aria-hidden="true">🪑</div>
+    <h1 id="phase">Sitting</h1>
+    <div id="clock" role="timer" aria-label="40 minutes remaining">40:00</div>
+    <div class="progress-track" aria-hidden="true"><div id="progress"></div></div>
+    <p id="next">Next: Standing · 15 minutes</p>
+    <p id="cycle">Cycle 1 · 60 minutes per cycle</p>
+    <div class="controls">
+      <button id="start" type="button">▶ Start</button>
+      <button id="reset" type="button">↻ Reset</button>
+    </div>
+    <div class="settings">
+      <label><input id="soundToggle" type="checkbox" checked> 🔔 Bell sound at every phase completion</label>
+      <label><input id="voiceToggle" type="checkbox" checked> 🗣️ Announce each new phase</label>
+    </div>
+    <div class="phases" aria-label="Movement phases">
+      <div class="phase-card active" id="card0">🪑 <strong>40 min</strong>Sitting</div>
+      <div class="phase-card" id="card1">🧍 <strong>15 min</strong>Standing</div>
+      <div class="phase-card" id="card2">🚶 <strong>5 min</strong>Movement</div>
+    </div>
+    <p id="status" aria-live="polite">Ready to begin</p>
+    <p id="saveStatus" aria-live="polite">Local log: connecting…</p>
+    <div class="connection"><strong>Automatic local tracking</strong><br>Elapsed time is saved to <code>movement_daily.csv</code> while the timer runs. Paused time is excluded. Keep the local server terminal open.</div>
+    <p class="hint">Keep this page open while the timer runs. Click Start to enable audio. Pause whenever needed, and move gently within your comfort level.</p>
+  </section>
+</main>
+<script>
+const phases = [
+  {name:"Sitting", icon:"🪑", duration:40*60, next:"Standing", nextDuration:"15 minutes", key:"sitting"},
+  {name:"Standing", icon:"🧍", duration:15*60, next:"Walking / movement", nextDuration:"5 minutes", key:"standing"},
+  {name:"Walking / movement", icon:"🚶", duration:5*60, next:"Sitting", nextDuration:"40 minutes", key:"movement"}
+];
+const $ = id => document.getElementById(id);
+let phaseIndex=0, remaining=phases[0].duration, cycle=1, running=false, interval=null, deadline=0, audioContext=null;
+let lastTickMs=null, unsentSeconds=0, lastSyncAt=0, completedCycles=0;
+const SYNC_EVERY_MS=10000;
+
+async function prepareAudio() {
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass) return;
+  if(!audioContext) audioContext=new AudioContextClass();
+  if(audioContext.state==="suspended") await audioContext.resume();
+}
+function playBell() {
+  if(!$("soundToggle").checked||!audioContext||audioContext.state!=="running") return;
+  const now=audioContext.currentTime;
+  [880,1174.66].forEach((frequency,index)=>{
+    const oscillator=audioContext.createOscillator(), gain=audioContext.createGain(), startAt=now+index*.22;
+    oscillator.type="sine"; oscillator.frequency.value=frequency;
+    gain.gain.setValueAtTime(.0001,startAt); gain.gain.exponentialRampToValueAtTime(.18,startAt+.025);
+    gain.gain.exponentialRampToValueAtTime(.0001,startAt+.8);
+    oscillator.connect(gain); gain.connect(audioContext.destination);
+    oscillator.start(startAt); oscillator.stop(startAt+.85);
+  });
+}
+function announce(messageText) {
+  if(!$("voiceToggle").checked||!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const message=new SpeechSynthesisUtterance(messageText);
+  message.rate=.9; message.pitch=1; message.volume=1; window.speechSynthesis.speak(message);
+}
+function render() {
+  const phase=phases[phaseIndex], minutes=Math.floor(remaining/60), seconds=remaining%60;
+  const formatted=String(minutes).padStart(2,"0")+":"+String(seconds).padStart(2,"0");
+  $("icon").textContent=phase.icon; $("phase").textContent=phase.name; $("clock").textContent=formatted;
+  $("clock").setAttribute("aria-label",`${minutes} minutes and ${seconds} seconds remaining`);
+  $("progress").style.width=((phase.duration-remaining)/phase.duration*100)+"%";
+  $("next").textContent=`Next: ${phase.next} · ${phase.nextDuration}`;
+  $("cycle").textContent=`Cycle ${cycle} · 50 minutes per cycle`;
+  $("start").textContent=running?"Ⅱ Pause":"▶ Start";
+  phases.forEach((_,index)=>$("card"+index).classList.toggle("active",index===phaseIndex));
+  document.title=`${formatted} · ${phase.name} — 30–15–5 Timer`;
+}
+async function sendLog(seconds, phaseKey, cycles=0) {
+  if(seconds<=0 && cycles<=0) return;
+  try {
+    const response=await fetch("/api/log",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({phase:phaseKey, seconds:Math.round(seconds*1000)/1000, cycles, timestamp:new Date().toISOString()})
+    });
+    if(!response.ok) throw new Error("Server returned "+response.status);
+    const result=await response.json();
+    $("saveStatus").textContent=`Local log: saved · today ${result.today.sitting_min} sitting / ${result.today.standing_min} standing / ${result.today.movement_min} movement min`;
+  } catch(error) {
+    $("saveStatus").textContent="Local log: not connected — keep the timer server running; retrying on next sync.";
+    // Retain seconds for the next sync if the local server is temporarily unavailable.
+    unsentSeconds += seconds;
+    if(cycles) completedCycles += cycles;
+  }
+}
+async function flushLog() {
+  if(unsentSeconds<=0 && completedCycles<=0) return;
+  const phaseKey=phases[phaseIndex].key, seconds=unsentSeconds, cycles=completedCycles;
+  unsentSeconds=0; completedCycles=0;
+  await sendLog(seconds,phaseKey,cycles);
+}
+function accountElapsed(now) {
+  if(lastTickMs===null){lastTickMs=now;return;}
+  const delta=Math.max(0,(now-lastTickMs)/1000);
+  lastTickMs=now;
+  if(!running||delta===0) return;
+  // Credit elapsed time to the phase that was active during this interval.
+  unsentSeconds+=Math.min(delta, 2); // avoid huge credit after a suspended/background tab
+}
+function tick() {
+  if(!running) return;
+  const now=Date.now();
+  const phase=phases[phaseIndex];
+  const previous=remaining;
+  remaining=Math.max(0,Math.ceil((deadline-now)/1000));
+  // Time elapsed since the prior tick is credited to the current phase.
+  const elapsed=Math.max(0,Math.min(2,(previous-remaining)));
+  unsentSeconds+=elapsed;
+  if(remaining<=0) {
+    const finishedKey=phase.key;
+    if(phaseIndex===2){completedCycles++;cycle++;}
+    flushSpecificPhase(finishedKey);
+    phaseIndex=(phaseIndex+1)%phases.length;
+    remaining=phases[phaseIndex].duration;
+    deadline=Date.now()+remaining*1000;
+    const nextPhase=phases[phaseIndex];
+    $("status").textContent=`Now: ${nextPhase.name}`;
+    playBell();
+    if(phaseIndex===0) announce("Movement phase complete. A new cycle begins. Time to sit for 40 minutes.");
+    else if(phaseIndex===1) announce("Sitting phase complete. Time to stand for 15 minutes.");
+    else announce("Standing phase complete. Time to walk or move gently for 5 minutes.");
+  }
+  if(Date.now()-lastSyncAt>=SYNC_EVERY_MS){flushLog();lastSyncAt=Date.now();}
+  render();
+}
+async function flushSpecificPhase(phaseKey) {
+  // All accumulated seconds belong to the phase that just ended.
+  const seconds=unsentSeconds, cycles=completedCycles;
+  unsentSeconds=0; completedCycles=0;
+  await sendLog(seconds,phaseKey,cycles);
+}
+async function toggleTimer() {
+  if(running) {
+    // Account for time since the previous tick before pausing.
+    const now=Date.now();
+    const elapsed=Math.max(0,Math.min(2,Math.ceil((deadline-now)/1000) - remaining));
+    // tick() is the authoritative elapsed-time updater; run it once before pausing.
+    tick();
+    running=false; clearInterval(interval); interval=null; lastTickMs=null;
+    await flushLog();
+    $("status").textContent="Paused"; render(); return;
+  }
+  try{await prepareAudio();}catch(error){}
+  running=true; deadline=Date.now()+remaining*1000; lastTickMs=Date.now(); lastSyncAt=Date.now();
+  $("status").textContent="Timer running"; render();
+  clearInterval(interval); interval=setInterval(tick,250);
+}
+async function resetTimer() {
+  if(running) tick();
+  running=false; clearInterval(interval); interval=null; lastTickMs=null;
+  await flushLog();
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  phaseIndex=0; remaining=phases[0].duration; cycle=1; deadline=0;
+  $("status").textContent="Reset · Ready to begin"; render();
+}
+$("start").addEventListener("click",toggleTimer);
+$("reset").addEventListener("click",resetTimer);
+window.addEventListener("beforeunload",()=>{ if(unsentSeconds>0) navigator.sendBeacon("/api/log",new Blob([JSON.stringify({phase:phases[phaseIndex].key,seconds:unsentSeconds,cycles:completedCycles,timestamp:new Date().toISOString()})],{type:"application/json"})); });
+async function checkConnection(){
+  try{
+    const r=await fetch("/api/health");
+    if(!r.ok) throw new Error();
+    const d=await r.json();
+    $("saveStatus").textContent=`Local log: connected · CSV: ${d.csv_file}`;
+  }catch(e){$("saveStatus").textContent="Local log: not connected — start the Python server and open http://localhost:8000/";}
+}
+render(); checkConnection();
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Wellness Tracker</title>
+<style>
+*{box-sizing:border-box}
+:root{--page:#F8F1D5;--panel:#FFFDF4;--green:#2E8B57;--violet:#8B5CF6;--text:#403D30;--muted:#756F5B;--border:#E4DAB5}
+body{margin:0;min-height:100vh;padding:24px;font-family:Arial,sans-serif;background:var(--page);color:var(--text)}
+main{max-width:900px;margin:0 auto}.panel{padding:24px;background:var(--panel);border:1px solid rgba(181,161,91,.22);border-radius:22px;box-shadow:0 10px 30px rgba(80,69,35,.08)}
+h1{margin:0 0 8px;font-size:26px}.intro{color:var(--muted);line-height:1.5;margin:0 0 22px}
+.tracker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.activity{padding:18px;background:#fff;border:1px solid var(--border);border-radius:16px}
+.activity h2{font-size:17px;margin:0 0 8px}.description{color:var(--muted);font-size:13px;line-height:1.5;min-height:38px;margin:0 0 12px}
+.count{font-size:26px;font-weight:bold;margin:12px 0;color:var(--green)}.progress-track{width:100%;height:8px;background:#eee8d7;border-radius:10px;overflow:hidden;margin:12px 0 16px}.progress{height:100%;width:0;background:var(--green);border-radius:10px;transition:width .2s}
+.actions{display:flex;flex-wrap:wrap;gap:8px}button{border:none;padding:10px 12px;border-radius:10px;background:var(--green);color:white;font-weight:bold;cursor:pointer;font-size:13px}button:hover{filter:brightness(.92)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--violet);outline-offset:3px}.reset{background:#e9e2f9;color:#5b3aa4}
+.summary{margin-top:18px;padding:15px;background:#F0F6E9;border-radius:12px;line-height:1.7}.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:18px}
+.section-title{margin:24px 0 10px;font-size:18px}.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.field label{font-size:13px;color:var(--muted);font-weight:bold}
+input{padding:10px;border:1px solid var(--border);border-radius:10px;font:inherit;color:var(--text);max-width:100%;background:#fff}
+.sleep-plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.plan{padding:12px;background:#fff;border:1px solid var(--border);border-radius:12px}.plan strong{display:block;margin-bottom:5px}.plan span{font-size:13px;color:var(--muted)}.small{font-size:12px;color:var(--muted)}
+@media(max-width:600px){body{padding:14px}.panel{padding:18px 14px}.tracker,.sleep-plans{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main><section class="panel">
+<h1>💧 Daily Wellness Tracker</h1>
+<p class="intro">Track water intake, neck-strengthening exercises, medicine doses, sitz baths, and your sleep routine.</p>
+<p class="small"><a href="index.html" style="color:var(--green);font-weight:bold">← Back to Movement Timer</a></p>
+<div class="tracker">
+<section class="activity"><h2>💧 Water Intake</h2><p class="description">500 ml per serving · 6 servings daily</p><div class="count" id="water-count">0 / 6</div><div id="water-total">0 ml consumed</div><div class="progress-track"><div class="progress" id="water-progress"></div></div><div class="actions"><button onclick="changeCount('water',1)">+ 500 ml</button><button class="reset" onclick="changeCount('water',-1)">Undo</button><button class="reset" onclick="resetCount('water')">Reset</button></div></section>
+<section class="activity"><h2>🧘 Neck Exercise</h2><p class="description">Neck-strengthening exercise · 2 sessions</p><div class="count" id="neck-count">0 / 2</div><div class="progress-track"><div class="progress" id="neck-progress"></div></div><div class="actions"><button onclick="changeCount('neck',1)">+ Complete session</button><button class="reset" onclick="changeCount('neck',-1)">Undo</button><button class="reset" onclick="resetCount('neck')">Reset</button></div></section>
+<section class="activity"><h2>💊 Medicine</h2><p class="description">Track up to 5 doses, only as prescribed</p><div class="count" id="medicine-count">0 / 5</div><div class="progress-track"><div class="progress" id="medicine-progress"></div></div><div class="actions"><button onclick="changeCount('medicine',1)">+ Dose taken</button><button class="reset" onclick="changeCount('medicine',-1)">Undo</button><button class="reset" onclick="resetCount('medicine')">Reset</button></div></section>
+<section class="activity"><h2>🛁 Sitz Bath</h2><p class="description">Track your 3 planned sessions</p><div class="count" id="sitz-count">0 / 3</div><div class="progress-track"><div class="progress" id="sitz-progress"></div></div><div class="actions"><button onclick="changeCount('sitz',1)">+ Complete session</button><button class="reset" onclick="changeCount('sitz',-1)">Undo</button><button class="reset" onclick="resetCount('sitz')">Reset</button></div></section>
+</div>
+
+<h2 class="section-title">🌙 Sleep Timer & Sleep Log</h2>
+<section class="activity">
+<p class="description">Enable sound to arm a short audible buzz at 10:00 PM local time. Keep this page open and your device awake for the alarm to work.</p>
+<div class="count" id="clock">--:--:--</div><div class="summary" id="alarm-status">10:00 PM alarm is not armed yet.</div>
+<div class="actions" style="margin-top:12px"><button onclick="enableAlarm()">Enable sound & arm 10 PM alarm</button><button class="reset" onclick="stopAlarm()">Stop alarm sound</button></div>
+<div class="field"><label for="bedtime">Bedtime</label><input type="datetime-local" id="bedtime"></div><div class="actions"><button onclick="logBedtimeNow()">Log bedtime now</button></div>
+<div class="field"><label for="waketime">Wake-up time</label><input type="datetime-local" id="waketime"></div><div class="actions"><button onclick="logWakeNow()">Log wake-up now</button><button onclick="saveSleepLog()">Save sleep record</button></div>
+<div id="sleep-result" class="summary">No sleep record saved for today yet.</div>
+</section>
+
+<h2 class="section-title">⏳ Sleep-window durations</h2>
+<div class="sleep-plans">
+<div class="plan"><strong>9:00 PM → 4:30 AM</strong><span>7 hours 30 minutes</span></div>
+<div class="plan"><strong>9:00 PM → 5:00 AM</strong><span>8 hours</span></div>
+<div class="plan"><strong>10:00 PM → 6:00 AM</strong><span>8 hours</span></div>
+</div>
+<p class="small">These are the time windows available for sleep, not a measurement of actual sleep. Sleep onset and nighttime awakenings can reduce actual sleep duration.</p>
+
+<h2 class="section-title">📋 Today’s Summary</h2>
+<section class="summary"><strong>Today’s Summary</strong><div id="summary">Loading progress…</div><div id="today-sleep-summary"></div></section>
+<div class="actions" style="margin-top:16px"><button onclick="downloadCSV()">Export all records for Excel (.csv)</button><button class="reset" onclick="downloadSleepCSV()">Export sleep log (.csv)</button></div>
+<p class="note">💜 Progress is stored in this browser on this device. Export records regularly; CSV files open in Excel and can be saved as .xlsx. A browser alarm is not dependable if the browser closes, the tab is suspended, or the computer sleeps. Use a dedicated alarm app as a backup. Follow your clinician's instructions for medicines, exercises and sitz baths.</p>
+</section></main>
+<script>
+const targets={water:6,neck:2,medicine:5,sitz:3};let counts={water:0,neck:0,medicine:0,sitz:0};
+const dateKey=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const recordsKey='wellness-tracker-records-v1',today=dateKey();let records={};
+try{records=JSON.parse(localStorage.getItem(recordsKey)||'{}')||{}}catch(e){}
+try{const saved=JSON.parse(localStorage.getItem('wellness-tracker-'+today)||'null');if(saved)Object.keys(targets).forEach(k=>counts[k]=Math.max(0,Math.min(targets[k],Number(saved[k])||0)))}catch(e){}
+function saveAll(){try{localStorage.setItem('wellness-tracker-'+dateKey(),JSON.stringify(counts));records[dateKey()]={...(records[dateKey()]||{}),...counts,bedtime:document.getElementById('bedtime').value||(records[dateKey()]||{}).bedtime||'',waketime:document.getElementById('waketime').value||(records[dateKey()]||{}).waketime||''};localStorage.setItem(recordsKey,JSON.stringify(records))}catch(e){console.warn('Could not save records',e)}}
+function changeCount(k,n){counts[k]=Math.max(0,Math.min(targets[k],counts[k]+n));render()}
+function resetCount(k){counts[k]=0;render()}
+function duration(a,b){if(!a||!b)return '';let ms=new Date(b)-new Date(a);if(ms<0)ms+=86400000;if(ms<=0)return '';return Math.floor(ms/3600000)+' h '+Math.floor(ms%3600000/60000)+' min'}
+function render(){Object.keys(targets).forEach(k=>{document.getElementById(k+'-count').textContent=counts[k]+' / '+targets[k];document.getElementById(k+'-progress').style.width=(counts[k]/targets[k]*100)+'%'});document.getElementById('water-total').textContent=(counts.water*500).toLocaleString()+' ml consumed';document.getElementById('summary').textContent='💧 Water: '+counts.water*500+' / 3000 ml · 🧘 Neck exercise: '+counts.neck+' / 2 · 💊 Medicine doses: '+counts.medicine+' / 5 · 🛁 Sitz baths: '+counts.sitz+' / 3';saveAll();renderTodaySleepSummary()}
+function toLocalInput(d){const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())}
+function logBedtimeNow(){document.getElementById('bedtime').value=toLocalInput(new Date());saveSleepLog()}
+function logWakeNow(){document.getElementById('waketime').value=toLocalInput(new Date());saveSleepLog()}
+function saveSleepLog(){const b=document.getElementById('bedtime').value,w=document.getElementById('waketime').value;records[dateKey()]={...(records[dateKey()]||{}),...counts,bedtime:b,waketime:w};try{localStorage.setItem(recordsKey,JSON.stringify(records))}catch(e){}document.getElementById('sleep-result').textContent=(b?'Bedtime: '+b.replace('T',' '):'Bedtime not entered')+' · '+(w?'Wake-up: '+w.replace('T',' '):'Wake-up time not entered')+(b&&w?' · Recorded sleep window: '+duration(b,w):'');renderTodaySleepSummary()}
+function renderTodaySleepSummary(){const r=records[dateKey()]||{};document.getElementById('today-sleep-summary').textContent=(r.bedtime||r.waketime)?'Sleep log: '+(r.bedtime||'bedtime not entered')+' → '+(r.waketime||'wake-up not entered')+(r.bedtime&&r.waketime?' · '+duration(r.bedtime,r.waketime):''):'Sleep log: not completed today.'}
+function cell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function download(name,rows){const blob=new Blob(['\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8;'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function downloadCSV(){saveAll();const rows=[['Date','Water servings','Water ml','Neck sessions','Medicine doses recorded','Sitz baths','Bedtime','Wake-up time','Sleep window']];Object.entries(records).sort(([a],[b])=>a.localeCompare(b)).forEach(([d,r])=>rows.push([d,r.water||0,(r.water||0)*500,r.neck||0,r.medicine||0,r.sitz||0,r.bedtime||'',r.waketime||'',duration(r.bedtime,r.waketime)]));download('wellness-tracker-records.csv',rows)}
+function downloadSleepCSV(){saveAll();const rows=[['Date','Bedtime','Wake-up time','Sleep window']];Object.entries(records).sort(([a],[b])=>a.localeCompare(b)).forEach(([d,r])=>rows.push([d,r.bedtime||'',r.waketime||'',duration(r.bedtime,r.waketime)]));download('sleep-log.csv',rows)}
+let audio=null,alarmInterval=null,armed=false,lastAlarm='';
+async function enableAlarm(){try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')await audio.resume();armed=true;document.getElementById('alarm-status').textContent='Sound enabled. Buzz is armed for 10:00 PM local time while this page remains open and the device is awake.';beep(660,.12);setTimeout(()=>beep(880,.12),180)}catch(e){document.getElementById('alarm-status').textContent='Audio could not be enabled. Check browser permissions and try again.'}}
+function beep(freq,secs){if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.type='square';o.frequency.value=freq;g.gain.value=.08;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+secs)}
+function stopAlarm(){if(alarmInterval){clearInterval(alarmInterval);alarmInterval=null}}
+function buzz(){stopAlarm();let n=0;alarmInterval=setInterval(()=>{beep(n%2?880:660,.22);if(++n>=20)stopAlarm()},350);document.getElementById('alarm-status').textContent='🔔 10:00 PM — wind-down time. Buzz will stop automatically or press Stop alarm sound.'}
+function tick(){const d=new Date();document.getElementById('clock').textContent=d.toLocaleTimeString();if(armed&&d.getHours()===22&&d.getMinutes()===0&&lastAlarm!==dateKey()){lastAlarm=dateKey();buzz()}}
+setInterval(tick,1000);tick();
+const tr=records[today]||{};if(tr.bedtime)document.getElementById('bedtime').value=tr.bedtime;if(tr.waketime)document.getElementById('waketime').value=tr.waketime;render();if(tr.bedtime||tr.waketime)saveSleepLog();
+</script></body></html>

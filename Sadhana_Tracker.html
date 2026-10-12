@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sadhana Daily Tracker</title>
+<style>
+*{box-sizing:border-box}
+:root{--page:#F8F1D5;--panel:#FFFDF4;--soft-yellow:#F2E8BD;--gold:#8B5CF6;--green:#2E8B57;--button:#2E8B57;--text:#403D30;--muted:#756F5B;--border:#E4DAB5}
+body{margin:0;min-height:100vh;padding:28px;font-family:Arial,sans-serif;background:var(--page);color:var(--text)}
+.page{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.panel{padding:24px;background:var(--panel);border:1px solid rgba(181,161,91,.22);border-radius:22px;box-shadow:0 10px 30px rgba(80,69,35,.08)}
+h1{margin:0 0 8px;font-size:clamp(26px,4vw,36px)}
+.subtitle{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.topline{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+.datebox{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:bold}
+input,textarea,button{font:inherit}
+input[type=date],input[type=text],textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:#fffef9;color:var(--text)}
+.practice-list{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.practice{display:grid;grid-template-columns:minmax(160px,1fr) minmax(120px,.8fr) minmax(220px,1.5fr);gap:16px;align-items:center;padding:18px;border:1px solid var(--border);border-radius:16px;background:#FFFEF9}
+.practice h2{font-size:18px;margin:0 0 5px}.practice p{font-size:12px;color:var(--muted);margin:0;line-height:1.5}
+.status{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:bold;cursor:pointer}.status input{width:18px;height:18px;accent-color:var(--green)}
+.field{display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--muted);font-weight:bold}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+button,.button-link{border:0;border-radius:11px;padding:13px 17px;font-weight:bold;font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.primary{background:var(--button);color:white}.secondary{background:var(--soft-yellow);color:var(--text)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.notes{margin-top:18px;display:flex;flex-direction:column;gap:8px;font-size:13px;font-weight:bold}
+.footer{font-size:12px;color:var(--muted);line-height:1.6;margin:14px 0 0}
+#saveStatus{font-size:13px;color:var(--green);min-height:18px;margin:14px 0 0}
+@media(max-width:700px){body{padding:14px}.panel{padding:18px 14px}.practice{grid-template-columns:1fr;gap:12px}.topline{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="panel">
+    <div class="topline">
+      <div>
+        <h1>🕉️ Sadhana Daily Tracker</h1>
+        <p class="subtitle">Mark each practice as done or not done, and record the timing that works for you.</p>
+      </div>
+      <label class="datebox">Date
+        <input id="entryDate" type="date">
+      </label>
+    </div>
+  </header>
+
+  <section class="panel">
+    <h2 style="margin:0 0 6px;font-size:22px">Daily Practice</h2>
+    <p class="subtitle">Choose the status and enter your timing for each practice.</p>
+    <div class="practice-list">
+      <article class="practice">
+        <div><h2>1. Sudarshan Kriya</h2><p>Daily practice</p></div>
+        <label class="status"><input type="checkbox" id="kriyaDone"> Done</label>
+        <label class="field">Timing
+          <input type="text" id="kriyaTime" placeholder="e.g. 6:00–6:30 AM">
+        </label>
+      </article>
+      <article class="practice">
+        <div><h2>2. Sanyama</h2><p>Daily practice</p></div>
+        <label class="status"><input type="checkbox" id="sanyamaDone"> Done</label>
+        <label class="field">Timing
+          <input type="text" id="sanyamaTime" placeholder="e.g. 7:00–7:20 PM">
+        </label>
+      </article>
+      <article class="practice">
+        <div><h2>3. Sri Sri</h2><p>Practice / session</p></div>
+        <label class="status"><input type="checkbox" id="sriSriDone"> Done</label>
+        <label class="field">Timing
+          <input type="text" id="sriSriTime" placeholder="Enter your timing">
+        </label>
+      </article>
+    </div>
+    <label class="notes">Today's Tracker
+      <textarea id="notes" rows="5" placeholder="Your saved date and practice details will appear here."></textarea>
+    </label>
+    <div class="actions">
+      <button class="primary" id="saveBtn" type="button">Save Daily Entry</button>
+      <a class="secondary button-link" href="./Wellness_and_Sadhana_Daily_Trackers.xlsx" target="_blank" rel="noopener noreferrer">Open Excel Tracker</a>
+      <button class="secondary" id="clearBtn" type="button">Clear This Date</button>
+    </div>
+    <p id="saveStatus" aria-live="polite">Entries are saved in this browser on this device.</p>
+    <p class="footer">Saving adds the selected date and practice details to Today's Tracker. Entries are saved in this browser. Use Open Excel Tracker to open the workbook in a new tab.</p>
+  </section>
+</main>
+<script>
+(() => {
+  const ids = ['kriyaDone','kriyaTime','sanyamaDone','sanyamaTime','sriSriDone','sriSriTime','notes'];
+  const dateInput = document.getElementById('entryDate');
+  const status = document.getElementById('saveStatus');
+  const storageKey = 'sadhanaDailyTracker.v1';
+  const today = new Date();
+  dateInput.value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  function readAll(){try{return JSON.parse(localStorage.getItem(storageKey)||'{}')}catch(e){return {}}}
+  function collect(){const item={};ids.forEach(id=>{const el=document.getElementById(id);item[id]=el.type==='checkbox'?el.checked:el.value.trim()});return item}
+  function fill(item={}){ids.forEach(id=>{const el=document.getElementById(id);if(el.type==='checkbox')el.checked=Boolean(item[id]);else el.value=item[id]||''})}
+  function loadDate(){const all=readAll();fill(all[dateInput.value]||{});status.textContent=all[dateInput.value]?'Saved entry loaded for this date.':'No saved entry for this date yet.'}
+  function save(){
+    if(!dateInput.value){status.textContent='Please choose a date.';return}
+    const all=readAll();
+    const item=collect();
+    const notesMarker='\n\nAdditional notes:\n';
+    const markerIndex=item.notes.lastIndexOf(notesMarker);
+    const additionalNotes=markerIndex===-1?item.notes:item.notes.slice(markerIndex+notesMarker.length);
+    const summary=[
+      'Date: '+dateInput.value,
+      'Sudarshan Kriya: '+(item.kriyaDone?'Done':'Not done')+(item.kriyaTime?' · '+item.kriyaTime:''),
+      'Sanyama: '+(item.sanyamaDone?'Done':'Not done')+(item.sanyamaTime?' · '+item.sanyamaTime:''),
+      'Sri Sri: '+(item.sriSriDone?'Done':'Not done')+(item.sriSriTime?' · '+item.sriSriTime:'')
+    ];
+    if(additionalNotes)summary.push('', 'Additional notes:', additionalNotes);
+    item.notes=summary.join('\n');
+    document.getElementById('notes').value=item.notes;
+    all[dateInput.value]=item;
+    localStorage.setItem(storageKey,JSON.stringify(all));
+    status.textContent="Saved for "+dateInput.value+"; date and practice details added to Today's Tracker.";
+  }
+  dateInput.addEventListener('change',loadDate);
+  document.getElementById('saveBtn').addEventListener('click',save);
+  document.getElementById('clearBtn').addEventListener('click',()=>{const all=readAll();delete all[dateInput.value];localStorage.setItem(storageKey,JSON.stringify(all));fill();status.textContent='Cleared the entry for '+dateInput.value+'.'});
+  loadDate();
+})();
+</script>
+</body>
+</html>
