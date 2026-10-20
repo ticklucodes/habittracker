@@ -76,25 +76,42 @@ input[type=checkbox] { width:17px; height:17px; accent-color:var(--violet); flex
       <h2 class="section-title" id="links-heading">✔️ Quick Links</h2>
       <p class="section-subtitle">Hanuman Chalisa, Gurudev Meditation, Sudarshan Kriya, Om Namah Shivaya, and Sri Sri Yoga.</p>
       <div class="quick-links">
-        <a class="link-button" href="Sadhana_Tracker.html">🕉️ SADHANA</a>
+        <a class="link-button" href="Sadhana_Tracker.html">🕉️ SADHANA</a> 
+
         <p class="link-description">Your study resources and documents.</p>
-        <a class="link-button" href="study_work.html" target="_blank" rel="noopener noreferrer">📘 STUDY</a>
+        
+        <a class="link-button" href="srm_mca_hq.html" target="_blank" rel="noopener noreferrer">📘 STUDY</a>
+        
         <p class="link-description">Access your notes, study plans, and daily tasks.</p>
-        <a class="link-button word" href="daily_task_excel.html" target="_blank" rel="noopener noreferrer">📝 DAILY TASKS</a>
+        
+        <a class="link-button word" href="" target="_blank" rel="noopener noreferrer">📝 DAILY TASKS</a>
+        
         <p class="link-description">Open your study notes and daily task documents.</p>
+        
         <a class="link-button" href="Daily_Wellness_Sleep_Tracker.html">💧 WELLNESS TRACKER</a>
+        
         <p class="link-description">Track daily wellness activities and your sleep log.</p>
+     
       </div>
+
     </section>
   </div>
   <section class="panel timer timer-panel" aria-label="40–15–5 movement timer">
+    
     <div class="subtitle">HEALTHY MOVEMENT ROUTINE</div>
+    
     <div id="icon" aria-hidden="true">🪑</div>
+    
     <h1 id="phase">Sitting</h1>
+    
     <div id="clock" role="timer" aria-label="40 minutes remaining">40:00</div>
+    
     <div class="progress-track" aria-hidden="true"><div id="progress"></div></div>
+    
     <p id="next">Next: Standing · 15 minutes</p>
+
     <p id="cycle">Cycle 1 · 60 minutes per cycle</p>
+    
     <div class="controls">
       <button id="start" type="button">▶ Start</button>
       <button id="reset" type="button">↻ Reset</button>
@@ -156,7 +173,7 @@ function render() {
   $("clock").setAttribute("aria-label",`${minutes} minutes and ${seconds} seconds remaining`);
   $("progress").style.width=((phase.duration-remaining)/phase.duration*100)+"%";
   $("next").textContent=`Next: ${phase.next} · ${phase.nextDuration}`;
-  $("cycle").textContent=`Cycle ${cycle} · 50 minutes per cycle`;
+  $("cycle").textContent=`Cycle ${cycle} · 60 minutes per cycle`;
   $("start").textContent=running?"Ⅱ Pause":"▶ Start";
   phases.forEach((_,index)=>$("card"+index).classList.toggle("active",index===phaseIndex));
   document.title=`${formatted} · ${phase.name} — 30–15–5 Timer`;
